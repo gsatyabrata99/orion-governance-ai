@@ -1,4 +1,3 @@
-from dotenv import load_dotenv
 import os
 from dotenv import load_dotenv
 load_dotenv(dotenv_path=os.path.join(os.getcwd(), ".env"))
@@ -34,6 +33,7 @@ def detect_type(path: Path) -> str:
 def main():
     DATA_DIR.mkdir(exist_ok=True)
     files = [p for p in DATA_DIR.glob("*") if p.is_file() and not p.name.startswith(".")]
+
     if not files:
         print("No files in ./data")
         return
@@ -42,15 +42,27 @@ def main():
         content_type = detect_type(f)
         raw_bytes = f.read_bytes()
 
+            # --- metadata (define BEFORE creating doc_id) ---
+        import time
+        timestamp = int(__import__("time").time())
+        doc_type = "minutes" if "Board_Minutes" in f.name else ("coi" if "COI" in f.name else "policy")
+        allowed_users = ACL.get(f.name, ["Janish Kumar"])  # default minimal access
+
         doc = {
-            "filename": f.name,
-            "content_type": content_type,
-            "status": "UPLOADED",
-            "source": "local_upload",
+            "source_filename": f.name,
+            "ingested_at": timestamp,
+            "doc_type": doc_type,
+            "allowed_users": allowed_users,
+            "status": "NEW",
         }
 
+        # create Firestore doc_id
         doc_id = create_document_record(PROJECT_ID, doc)
 
+        # now that doc_id exists, store it back (optional but nice)
+        update_document_record(PROJECT_ID, doc_id, {"doc_id": doc_id})
+
+        # store raw file in GCS
         gcs_path = f"raw/{doc_id}/{f.name}"
         gcs_uri = upload_bytes(gcs_path, raw_bytes, content_type)
 
@@ -59,6 +71,7 @@ def main():
             "status": "STORED"
         })
 
+        # extract text (OCR already happens inside extract_pdf_text)
         if f.suffix.lower() == ".pdf":
             pages = extract_pdf_text(raw_bytes)
         elif f.suffix.lower() == ".docx":
@@ -71,10 +84,15 @@ def main():
             "page_count": len(pages)
         })
 
+        # chunk
         chunks = chunk_pages(doc_id, pages)
+
+        # enrich chunks with metadata + ACL
         for c in chunks:
             c["doc_id"] = doc_id
             c["project_id"] = PROJECT_ID
+            c["allowed_users"] = allowed_users
+            c["source_filename"] = f.name
             c["source"] = {"filename": f.name, "gcs_uri": gcs_uri}
 
         write_chunks(PROJECT_ID, doc_id, chunks)
@@ -85,6 +103,8 @@ def main():
         })
 
         print(f"Ingested {f.name} -> {len(chunks)} chunks")
+
+
 
 if __name__ == "__main__":
     main()
