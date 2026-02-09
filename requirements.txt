@@ -1,0 +1,21 @@
+# Core
+python-dotenv>=1.0.0
+
+# Google Cloud
+google-cloud-firestore>=2.13.0
+google-cloud-storage>=2.16.0
+google-cloud-documentai>=2.27.0
+google-cloud-aiplatform>=1.42.0
+google-auth>=2.25.0
+
+# Vertex AI / Gemini
+vertexai>=1.42.0
+
+# Document processing
+python-docx>=1.1.0
+pdfplumber>=0.11.0
+pillow>=10.0.0
+
+# Utilities
+tqdm>=4.66.0
+
