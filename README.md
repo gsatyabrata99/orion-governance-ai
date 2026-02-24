@@ -6,11 +6,13 @@ Orion is a prototype semantic search and document intelligence system built for 
 
 ---
 
-## What It Does
+## The Problem That It Solves
 
 Orion enables organizations to search across their internal document repositories using natural language queries. Results are semantically ranked, citation-anchored, and filtered by user-level access permissions — modeling how enterprise systems enforce document visibility while delivering intelligent retrieval.
 
 ---
+
+Enterprise employees waste hours searching across internal systems that don't talk to each other — and AI assistants that ignore access permissions create real compliance risk. Orion is a prototype that solves both: natural language search across document repositories, with results filtered by who's actually allowed to see them. Built to model the retrieval infrastructure behind AI assistants deployed to thousands of employees.
 
 ## Architecture Overview
 
@@ -46,6 +48,9 @@ Raw Documents (PDF, DOCX, Scanned)
 ```
 
 ---
+
+##Key Product Decision
+Why ACL filtering at chunk level, not document level: Enterprise documents often contain sections with different sensitivity levels (e.g., a contract with public terms but confidential pricing appendices). Enforcing permissions at the document level would require either over-blocking (hide the whole doc) or over-sharing (expose everything). Chunk-level ACL inheritance lets the system surface exactly what a user is permitted to see — no more, no less.
 
 ## Key Features
 
@@ -174,6 +179,8 @@ cp .env.example .env
 ## What This System Represents
 
 Orion demonstrates the foundational components required to build production enterprise search infrastructure: ingestion, indexing, permission-aware storage, and semantic retrieval. It is positioned as a **permission-aware semantic retrieval backend for enterprise knowledge systems** — the kind of system that sits beneath AI assistants deployed to thousands of employees.
+
+This project directly informed my understanding of the RAG and governance architecture I built at Verizon for a 10,000-person enterprise deployment.
 
 ---
 
